@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
-import { ConfigParams } from 'express-openid-connect';
-import { auth } from 'express-openid-connect';
-import { requiresAuth } from 'express-openid-connect';
+import { ConfigParams, auth, requiresAuth } from 'express-openid-connect';
+
+const url: string | undefined = process.env.APP_URL;
 
 const config: ConfigParams = {
   authRequired: false,
@@ -19,10 +19,20 @@ router.use(auth(config));
 
 // req.isAuthenticated is provided from the auth router
 router.get('/', (request: Request, response: Response) => {
-  response.send(request.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+  try {
+    let isAuthenticated = request.oidc.isAuthenticated();
+    if (!isAuthenticated) {
+      response.status(401).redirect('/login');
+    } else if (url && isAuthenticated) {
+      response.status(301).redirect(url);
+    }
+  } catch (e) {
+    console.log('Auth server error', e);
+    response.status(500).send('Authentication Server Error');
+  }
 });
 router.get('/profile', requiresAuth(), (request: Request, response: Response) => {
-  response.json(request.oidc.user);
+  response.status(200).json(request.oidc.user);
 });
 
 export default router;
