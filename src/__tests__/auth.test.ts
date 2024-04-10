@@ -7,6 +7,8 @@ import http from 'http';
 
 let server: http.Server | null  = null;
 
+process.env.APP_URL = 'https://amazon.com';
+
 test.beforeAll(async () => {
   server = authApp.start(3000);
 });
@@ -22,6 +24,7 @@ test.describe('Authentication services', () => {
     await page.getByPlaceholder('your password').fill('test');
     await page.getByRole('button', { name: /log in/i }).click();
 
-    await expect(await page.getByText(/logged in/i)).toBeVisible();
+    const textQuery = await page.getByLabel('Amazon', {exact: true});
+    await expect(textQuery).toBeVisible();
   });
 });
